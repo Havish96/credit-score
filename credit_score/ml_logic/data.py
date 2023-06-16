@@ -4,7 +4,7 @@ import scipy.stats as stats
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
-    print("🧹 Cleaning data")
+    print("🧹 Cleaning data ...")
     # Remove special characters
     cleaned_df = df.applymap(__remove_special_characters).replace(['', 'nan', '!@9#%8', '#F%$D@*&8'], np.NaN)
 

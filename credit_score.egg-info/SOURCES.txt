@@ -3,7 +3,6 @@
 README.md
 requirements.txt
 setup.py
-Notebooks/credit_score.ipynb
 credit_score/__init__.py
 credit_score/params.py
 credit_score.egg-info/PKG-INFO
