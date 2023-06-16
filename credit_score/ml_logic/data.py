@@ -27,8 +27,9 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
                      'Interest_Rate', 'Num_of_Loan', 'Delay_from_due_date', 'Num_of_Delayed_Payment', 'Changed_Credit_Limit',
                      'Num_Credit_Inquiries', 'Outstanding_Debt', 'Total_EMI_per_month', 'Amount_invested_monthly', 'Monthly_Balance']
 
-    cleaned_df['Credit_History_Age'] = cleaned_df.groupby('Customer_ID')['Credit_History_Age'].apply(
-        lambda x: x.interpolate().bfill().ffill())
+    if df.shape[0] > 1:
+        cleaned_df['Credit_History_Age'] = cleaned_df.groupby('Customer_ID')['Credit_History_Age'].apply(
+            lambda x: x.interpolate().bfill().ffill())
 
     for col in numerical_col:
         __reassign_numeric_missing_with_mode(cleaned_df, 'Customer_ID', col)
