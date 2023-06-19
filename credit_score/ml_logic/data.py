@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import scipy.stats as stats
 
-
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     print("🧹 Cleaning data ...")
     # Remove special characters
@@ -10,31 +9,30 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
 
     # Change relevant data types
     cleaned_df = __change_data_type(cleaned_df)
+    print('🔧 Data types changed')
     cleaned_df['Credit_History_Age'] = cleaned_df.Credit_History_Age.apply(lambda x: __convert_to_months(x)).astype(float)
-
-    # Strip ['Type_of_loan'] column & replace NaNs with 'No Data'
-    cleaned_df['Type_of_Loan'] = cleaned_df['Type_of_Loan'].apply(
-        lambda x: x.lower().replace('and ', '').replace(', ', ',').strip() if pd.notna(x) else x)
-    cleaned_df['Type_of_Loan'].replace([np.NaN], 'No Data', inplace=True)
+    print('🔧 Credit_History_Age converted to months')
 
     # Reassign missing object values with mode grouping by 'Customer_ID'
-    __reassign_object_missing_with_mode(cleaned_df, 'Customer_ID', 'Occupation')
     __reassign_object_missing_with_mode(cleaned_df, 'Customer_ID', 'Credit_Mix')
-    __reassign_object_missing_with_mode(cleaned_df, 'Customer_ID', 'Payment_Behaviour')
+    print('🔧 Credit_Mix missing values re-assigned')
 
     # Reassign missing numerical values with mode grouping by 'Customer_ID'
     numerical_col = ['Age', 'Annual_Income', 'Monthly_Inhand_Salary', 'Num_Bank_Accounts', 'Num_Credit_Card',
                      'Interest_Rate', 'Num_of_Loan', 'Delay_from_due_date', 'Num_of_Delayed_Payment', 'Changed_Credit_Limit',
-                     'Num_Credit_Inquiries', 'Outstanding_Debt', 'Total_EMI_per_month', 'Amount_invested_monthly', 'Monthly_Balance']
+                     'Num_Credit_Inquiries', 'Outstanding_Debt', 'Monthly_Balance']
 
     if df.shape[0] > 1:
+        print('🔧 Interpolating Credit_History_Age')
         cleaned_df['Credit_History_Age'] = cleaned_df.groupby('Customer_ID')['Credit_History_Age'].apply(
             lambda x: x.interpolate().bfill().ffill())
 
     for col in numerical_col:
+        print('🔧 Reassigning missing values for', col)
         __reassign_numeric_missing_with_mode(cleaned_df, 'Customer_ID', col)
 
     # Compress DataFrame
+    print('🔧 Compressing DataFrame')
     cleaned_df = __compress(cleaned_df)
 
     print("✅ Data cleaned")
@@ -72,7 +70,6 @@ def __change_data_type(df):
     df['Num_of_Delayed_Payment'] = df.Num_of_Delayed_Payment.astype(float)
     df['Changed_Credit_Limit'] = df.Changed_Credit_Limit.astype(float)
     df['Outstanding_Debt'] = df.Outstanding_Debt.astype(float)
-    df['Amount_invested_monthly'] = df.Amount_invested_monthly.astype(float)
     df['Monthly_Balance'] = df.Monthly_Balance.astype(float)
 
     return df

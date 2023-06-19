@@ -9,13 +9,20 @@ def preprocess_features(X: pd.DataFrame) -> np.ndarray:
     """
     Preprocess features (X) for training and testing
     """
+    oe_cols = ['Payment_of_Min_Amount','Credit_Mix']
+    mms_cols = ['Age', 'Num_Bank_Accounts', 'Num_Credit_Card', 'Num_Credit_Inquiries', 'Num_of_Delayed_Payment']
+    ss_cols = ['Changed_Credit_Limit', 'Credit_History_Age']
+    rs_cols = ['Annual_Income', 'Monthly_Inhand_Salary', 'Interest_Rate', 'Num_of_Loan',
+               'Delay_from_due_date', 'Outstanding_Debt', 'Monthly_Balance']
+
     print("\n🛠️ Preprocessing features ...")
 
-    X_processed = __process_type_of_loan(X)
-    preprocessor = create_sklearn_preprocessor()
-    X_processed = preprocessor.fit_transform(X_processed)
+    X_processed = ordinal_encode(X, oe_cols)
+    X_processed = min_max_scale(X_processed, mms_cols)
+    X_processed = standard_scale(X_processed, ss_cols)
+    X_processed = robust_scale(X_processed, rs_cols)
 
-    print("✅ X_processed, with shape", X_processed.shape)
+    print("\n✅ X_processed, with shape", X_processed.shape)
 
     return X_processed
 
@@ -29,55 +36,57 @@ def preprocess_target(y: pd.Series) -> np.ndarray:
     y_encoded = le.fit_transform(y)
 
     print("✅ y_encoded, with shape", y_encoded.shape)
-    print("classes:", le.classes_)
+    print("Classes:", le.classes_)
 
     return y_encoded
 
-def __process_type_of_loan(X: pd.DataFrame) -> pd.DataFrame:
+def ordinal_encode(X: pd.DataFrame, cols: list) -> pd.DataFrame:
     """
-    Process 'Type_of_Loan' column into one-hot encoded columns
+    Ordinal encode columns
     """
-    data_sep = ','
-    col_sep = '_'
+    print(f"\nProcessing column: {cols} with ordinal encoding ...")
+    X_encoded = X.copy()
+    ordinal_encoder = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
 
-    object_cols = X.select_dtypes(include="object").columns
-    dummy_cols   = [col for col in object_cols if X[col].str.contains(data_sep, regex=True).any()]
-    dummy_prefix = [''.join(map(lambda x: x[0], col.split(col_sep))) if col_sep in col else col[:2] for col in dummy_cols]
+    X_ordinal = pd.DataFrame(ordinal_encoder.fit_transform(X[cols]), index = X.index,
+                          columns = cols)
 
-    for col, pre in zip(dummy_cols, dummy_prefix):
-        dummy_X = X.join(X[col].str.get_dummies(sep = data_sep).add_prefix(pre + col_sep))
+    X_encoded[cols] = X_ordinal[cols]
 
-    dummy_X.drop(columns = dummy_cols, inplace=True)
-    columns = dummy_X.columns
+    return X_encoded
 
-    for col, pre in zip(dummy_cols, dummy_prefix):
-        X_transformed = X.join(X[col].str.get_dummies(sep = data_sep).add_prefix(pre + col_sep))
-
-    X_transformed = X_transformed.reindex(columns = columns, fill_value = 0)
-
-    return X_transformed
-
-def create_sklearn_preprocessor() -> ColumnTransformer:
+def min_max_scale(X: pd.DataFrame, cols: list) -> pd.DataFrame:
     """
-    Create a sklearn preprocessor pipeline for X features
+    Min-max scale columns
     """
-    one_hot_encode_cols = ['Occupation', 'Payment_Behaviour']
-    ordinal_encode_cols = ['Payment_of_Min_Amount','Credit_Mix']
-    min_max_scale_cols = ['Age', 'Num_Bank_Accounts', 'Num_Credit_Card', 'Num_Credit_Inquiries', 'Num_of_Delayed_Payment']
-    standard_scale_cols = ['Credit_Utilization_Ratio', 'Changed_Credit_Limit', 'Credit_History_Age']
-    robust_scale_cols = ['Annual_Income', 'Monthly_Inhand_Salary', 'Interest_Rate', 'Num_of_Loan',
-                         'Delay_from_due_date', 'Outstanding_Debt', 'Total_EMI_per_month',
-                         'Amount_invested_monthly', 'Monthly_Balance']
+    print(f"\nProcessing column: {cols} with min-max-scaler ...")
+    X_scaled = X.copy()
+    min_max_scaler = MinMaxScaler()
 
-    column_transformer = [('one_hot_encode', OneHotEncoder(sparse=False, handle_unknown='ignore'), one_hot_encode_cols),
-                              ('ordinal_encode', OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1), ordinal_encode_cols)]
+    X_scaled[cols] = min_max_scaler.fit_transform(X[cols])
 
-    scaling_transformer = [('min_max_scale', MinMaxScaler(), min_max_scale_cols),
-                           ('standard_scale', StandardScaler(), standard_scale_cols),
-                           ('robust_scale', RobustScaler(), robust_scale_cols)]
+    return X_scaled
 
-    preprocessor = ColumnTransformer(transformers = column_transformer + scaling_transformer)
+def standard_scale(X: pd.DataFrame, cols: list) -> pd.DataFrame:
+    """
+    Standard scale columns
+    """
+    print(f"\nProcessing column: {cols} with standard-scaler ...")
+    X_scaled = X.copy()
+    standard_scaler = StandardScaler()
 
-    pipeline = make_pipeline(preprocessor)
+    X_scaled[cols] = standard_scaler.fit_transform(X[cols])
 
-    return pipeline
+    return X_scaled
+
+def robust_scale(X: pd.DataFrame, cols: list) -> pd.DataFrame:
+    """
+    Robust scale columns
+    """
+    print(f"\nProcessing column: {cols} with robust-scaler ...")
+    X_scaled = X.copy()
+    robust_scaler = RobustScaler()
+
+    X_scaled[cols] = robust_scaler.fit_transform(X[cols])
+
+    return X_scaled
