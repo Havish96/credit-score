@@ -1,12 +1,13 @@
 import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import pickle
 
 from credit_score.ml_logic.preprocessor import preprocess_features
-from credit_score.ml_logic.model import initialize_model, train_model, predict
+from credit_score.ml_logic.model import load_model
 
 app = FastAPI()
-# app.state.model = load_model()
+app.state.model = load_model()
 
 # Allowing all middleware is optional, but good practice for dev purposes
 app.add_middleware(
@@ -20,8 +21,8 @@ app.add_middleware(
 # http://127.0.0.1:8000/predict?pickup_datetime=2012-10-06 12:10:20&pickup_longitude=40.7614327&pickup_latitude=-73.9798156&dropoff_longitude=40.6513111&dropoff_latitude=-73.8803331&passenger_count=2
 @app.get("/predict")
 def predict(Age: float,
-            Payment_of_Min_Amount: float,
-            Credit_Mix: float,
+            Payment_of_Min_Amount: str,
+            Credit_Mix: str,
             Num_Bank_Accounts: float,
             Num_Credit_Card: float,
             Num_Credit_Inquiries: float,
@@ -58,12 +59,20 @@ def predict(Age: float,
                'Monthly_Balance': Monthly_Balance
                }
 
-    X = pd.DataFrame(my_dict)
+    X = pd.DataFrame(my_dict, index=[0])
     X_processed = preprocess_features(X)
 
     pred = float(app.state.model.predict(X_processed))
+    score = ''
 
-    return {'Credit_Score': pred}
+    if pred == 0:
+        score = 'Good'
+    elif pred == 1:
+        score = 'Poor'
+    elif pred == 2:
+        score = 'Average'
+
+    return {'Credit_Score': score}
 
 
 @app.get("/")

@@ -11,6 +11,8 @@ credit_score.egg-info/dependency_links.txt
 credit_score.egg-info/not-zip-safe
 credit_score.egg-info/requires.txt
 credit_score.egg-info/top_level.txt
+credit_score/api/__init__.py
+credit_score/api/fast.py
 credit_score/ml_logic/__init__.py
 credit_score/ml_logic/data.py
 credit_score/ml_logic/encoders.py

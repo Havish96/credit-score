@@ -1,7 +1,6 @@
 import xgboost as xgb
 import numpy as np
-import os
-import time
+import pickle
 
 def initialize_model() -> xgb.XGBClassifier:
     """
@@ -32,14 +31,24 @@ def predict(model: xgb.XGBClassifier, X: np.ndarray) -> np.ndarray:
 
 
 def save_model(model: xgb.XGBClassifier) -> None:
-    # """
-    # Save the model locally.
-    # """
-    # timestamp = time.strftime("%Y%m%d-%H%M%S")
+    """
+    Save the model locally.
+    """
+    # Save model locally
+    file_path = '/Users/havish/code/Havish96/credit-score/notebooks/xgb_model.pkl'
 
-    # # Save model locally
-    # model_path = os.path.join(LOCAL_REGISTRY_PATH, "models", f"{timestamp}.h5")
-    # model.save(model_path)
+    with open(file_path, 'wb') as file:
+        pickle.dump(model, file)
 
-    # print("✅ Model saved locally")
-    pass
+    print("✅ Model saved locally")
+
+def load_model() -> xgb.XGBClassifier:
+    """
+    Load the model locally.
+    """
+    file_path = '/Users/havish/code/Havish96/credit-score/notebooks/xgb_model.pkl'
+
+    with open(file_path, 'rb') as file:
+        model = pickle.load(file)
+
+    return model
