@@ -46,7 +46,7 @@ def load_model() -> xgb.XGBClassifier:
     """
     Load the model locally.
     """
-    file_path = '/Users/havish/code/Havish96/credit-score/notebooks/xgb_model.pkl'
+    file_path = '/prod/notebooks/xgb_model.pkl'
 
     with open(file_path, 'rb') as file:
         model = pickle.load(file)
