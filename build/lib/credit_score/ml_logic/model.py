@@ -35,7 +35,7 @@ def save_model(model: xgb.XGBClassifier) -> None:
     Save the model locally.
     """
     # Save model locally
-    file_path = '/Users/havish/code/Havish96/credit-score/notebooks/xgb_model.pkl'
+    file_path = '/Users/havish/code/Havish96/credit-score/models/xgb_model.pkl'
 
     with open(file_path, 'wb') as file:
         pickle.dump(model, file)
@@ -46,7 +46,7 @@ def load_model() -> xgb.XGBClassifier:
     """
     Load the model locally.
     """
-    file_path = '/Users/havish/code/Havish96/credit-score/notebooks/xgb_model.pkl'
+    file_path = '/Users/havish/code/Havish96/credit-score/models/xgb_model.pkl'
 
     with open(file_path, 'rb') as file:
         model = pickle.load(file)

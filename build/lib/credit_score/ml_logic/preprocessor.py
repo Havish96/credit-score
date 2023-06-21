@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
 
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, MinMaxScaler, StandardScaler, RobustScaler, LabelEncoder
+from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler, StandardScaler, RobustScaler, LabelEncoder
+import pickle
+
+from credit_score.ml_logic.data import clean_data
 
 def preprocess_features(X: pd.DataFrame) -> np.ndarray:
     """
@@ -15,12 +16,15 @@ def preprocess_features(X: pd.DataFrame) -> np.ndarray:
     rs_cols = ['Annual_Income', 'Monthly_Inhand_Salary', 'Interest_Rate', 'Num_of_Loan',
                'Delay_from_due_date', 'Outstanding_Debt', 'Monthly_Balance']
 
+    encoders = load_encoders()
+    X_processed = X.copy()
+
     print("\n🛠️ Preprocessing features ...")
 
-    X_processed = ordinal_encode(X, oe_cols)
-    X_processed = min_max_scale(X_processed, mms_cols)
-    X_processed = standard_scale(X_processed, ss_cols)
-    X_processed = robust_scale(X_processed, rs_cols)
+    X_processed[oe_cols] = encoders[0].transform(X[oe_cols])
+    X_processed[mms_cols] = encoders[1].transform(X_processed[mms_cols])
+    X_processed[ss_cols] = encoders[2].transform(X_processed[ss_cols])
+    X_processed[rs_cols] = encoders[3].transform(X_processed[rs_cols])
 
     print("\n✅ X_processed, with shape", X_processed.shape)
 
@@ -32,61 +36,74 @@ def preprocess_target(y: pd.Series) -> np.ndarray:
     """
     print("\n🛠️ Preprocessing target ...")
 
-    le = LabelEncoder()
-    y_encoded = le.fit_transform(y)
+    y_encoded = y.map({'Poor': 0, 'Standard': 1, 'Good': 2})
 
     print("✅ y_encoded, with shape", y_encoded.shape)
-    print("Classes:", le.classes_)
+    print("0 - Poor, 1 - Standard, 2 - Good")
 
     return y_encoded
 
-def ordinal_encode(X: pd.DataFrame, cols: list) -> pd.DataFrame:
+def load_encoders() -> list:
+    path = '/Users/havish/code/Havish96/credit-score/encoders/'
+
+    with open(path + 'ordinal_encoder.pkl', 'rb') as file:
+        ordinal_encoder = pickle.load(file)
+
+    with open(path + 'min_max_scaler.pkl', 'rb') as file:
+        min_max_scaler = pickle.load(file)
+
+    with open(path + 'standard_scaler.pkl', 'rb') as file:
+        standard_scaler = pickle.load(file)
+
+    with open(path + 'robust_scaler.pkl', 'rb') as file:
+        robust_scaler = pickle.load(file)
+
+    return [ordinal_encoder, min_max_scaler, standard_scaler, robust_scaler]
+
+def save_ordinal_encoder(X: pd.DataFrame, cols: list) -> OrdinalEncoder():
     """
     Ordinal encode columns
     """
-    print(f"\nProcessing column: {cols} with ordinal encoding ...")
-    X_encoded = X.copy()
+    file_path = '/Users/havish/code/Havish96/credit-score/encoders/ordinal_encoder.pkl'
+
     ordinal_encoder = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
+    ordinal_encoder.fit(X[cols])
 
-    X_ordinal = pd.DataFrame(ordinal_encoder.fit_transform(X[cols]), index = X.index,
-                          columns = cols)
+    with open(file_path, 'wb') as file:
+        pickle.dump(ordinal_encoder, file)
 
-    X_encoded[cols] = X_ordinal[cols]
-
-    return X_encoded
-
-def min_max_scale(X: pd.DataFrame, cols: list) -> pd.DataFrame:
+def save_min_max_scaler(X: pd.DataFrame, cols: list) -> MinMaxScaler():
     """
     Min-max scale columns
     """
-    print(f"\nProcessing column: {cols} with min-max-scaler ...")
-    X_scaled = X.copy()
+    file_path = '/Users/havish/code/Havish96/credit-score/encoders/min_max_scaler.pkl'
+
     min_max_scaler = MinMaxScaler()
+    min_max_scaler.fit(X[cols])
 
-    X_scaled[cols] = min_max_scaler.fit_transform(X[cols])
+    with open(file_path, 'wb') as file:
+        pickle.dump(min_max_scaler, file)
 
-    return X_scaled
-
-def standard_scale(X: pd.DataFrame, cols: list) -> pd.DataFrame:
+def save_standard_scaler(X: pd.DataFrame, cols: list) -> StandardScaler():
     """
     Standard scale columns
     """
-    print(f"\nProcessing column: {cols} with standard-scaler ...")
-    X_scaled = X.copy()
+    file_path = '/Users/havish/code/Havish96/credit-score/encoders/standard_scaler.pkl'
+
     standard_scaler = StandardScaler()
+    standard_scaler.fit(X[cols])
 
-    X_scaled[cols] = standard_scaler.fit_transform(X[cols])
+    with open(file_path, 'wb') as file:
+        pickle.dump(standard_scaler, file)
 
-    return X_scaled
-
-def robust_scale(X: pd.DataFrame, cols: list) -> pd.DataFrame:
+def save_robust_scaler(X: pd.DataFrame, cols: list) -> RobustScaler():
     """
     Robust scale columns
     """
-    print(f"\nProcessing column: {cols} with robust-scaler ...")
-    X_scaled = X.copy()
+    file_path = '/Users/havish/code/Havish96/credit-score/encoders/robust_scaler.pkl'
+
     robust_scaler = RobustScaler()
+    robust_scaler.fit(X[cols])
 
-    X_scaled[cols] = robust_scaler.fit_transform(X[cols])
-
-    return X_scaled
+    with open(file_path, 'wb') as file:
+        pickle.dump(robust_scaler, file)

@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# http://127.0.0.1:8000/predict?pickup_datetime=2012-10-06 12:10:20&pickup_longitude=40.7614327&pickup_latitude=-73.9798156&dropoff_longitude=40.6513111&dropoff_latitude=-73.8803331&passenger_count=2
+
 @app.get("/predict")
 def predict(Age: float,
             Payment_of_Min_Amount: str,
@@ -36,11 +36,8 @@ def predict(Age: float,
             Delay_from_due_date: float,
             Outstanding_Debt: float,
             Monthly_Balance: float):
-    """
-    Make a single course prediction.
-    Assumes `pickup_datetime` is provided as a string by the user in "%Y-%m-%d %H:%M:%S" format
-    Assumes `pickup_datetime` implicitly refers to the "US/Eastern" timezone (as any user in New York City would naturally write)
-    """
+
+
     my_dict = {'Age': Age,
                'Payment_of_Min_Amount': Payment_of_Min_Amount,
                'Credit_Mix': Credit_Mix,
@@ -66,11 +63,11 @@ def predict(Age: float,
     score = ''
 
     if pred == 0:
-        score = 'Good'
-    elif pred == 1:
         score = 'Poor'
-    elif pred == 2:
+    elif pred == 1:
         score = 'Average'
+    elif pred == 2:
+        score = 'Good'
 
     return {'Credit_Score': score}
 
